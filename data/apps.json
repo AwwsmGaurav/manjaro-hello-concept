@@ -1,0 +1,42 @@
+{
+  "categories": [
+    {
+      "name": "Creative",
+      "emoji": "🎨",
+      "apps": [
+        { "id": "gimp", "icon": "🖼️", "name": "GIMP", "desc": "Image manipulation & photo editing", "proprietary": false },
+        { "id": "inkscape", "icon": "✒️", "name": "Inkscape", "desc": "Vector graphics & SVG design", "proprietary": false },
+        { "id": "krita", "icon": "🖌️", "name": "Krita", "desc": "Digital painting & illustration", "proprietary": false },
+        { "id": "blender", "icon": "🧊", "name": "Blender", "desc": "3D modeling, animation & VFX", "proprietary": false },
+        { "id": "kdenlive", "icon": "🎬", "name": "Kdenlive", "desc": "Non-linear video editor", "proprietary": false },
+        { "id": "obs-studio", "icon": "🎥", "name": "OBS Studio", "desc": "Screen recording & live streaming", "proprietary": false },
+        { "id": "freecad", "icon": "📐", "name": "FreeCAD", "desc": "Parametric 3D CAD modeler", "proprietary": false },
+        { "id": "lmms", "icon": "🎹", "name": "LMMS", "desc": "Music production & beat making", "proprietary": false },
+        { "id": "godot", "icon": "🤖", "name": "Godot", "desc": "2D & 3D open-source game engine", "proprietary": false }
+      ]
+    },
+    {
+      "name": "Developers",
+      "emoji": "💻",
+      "apps": [
+        { "id": "vscodium-bin", "icon": "📝", "name": "VSCodium", "desc": "Telemetry-free VS Code build", "proprietary": false },
+        { "id": "zed", "icon": "⚡", "name": "Zed", "desc": "High-performance modern code editor", "proprietary": false },
+        { "id": "kdevelop", "icon": "🛠️", "name": "KDevelop", "desc": "Feature-rich KDE IDE", "proprietary": false },
+        { "id": "ghostty", "icon": "👻", "name": "Ghostty", "desc": "Fast, native GPU terminal", "proprietary": false },
+        { "id": "kitty", "icon": "🐱", "name": "Kitty", "desc": "Scriptable GPU terminal emulator", "proprietary": false },
+        { "id": "kate", "icon": "📄", "name": "Kate", "desc": "Advanced KDE text editor", "proprietary": false }
+      ]
+    },
+    {
+      "name": "Gamers",
+      "emoji": "🎮",
+      "apps": [
+        { "id": "steam", "icon": "🕹️", "name": "Steam", "desc": "PC gaming platform & Proton", "proprietary": true },
+        { "id": "discord", "icon": "🎧", "name": "Discord", "desc": "Voice, video & gaming chat", "proprietary": true },
+        { "id": "lutris", "icon": "🏆", "name": "Lutris", "desc": "Open gaming platform for Linux", "proprietary": false },
+        { "id": "prismlauncher", "icon": "🧱", "name": "Prism Launcher", "desc": "Open-source Minecraft launcher", "proprietary": false },
+        { "id": "supertuxkart", "icon": "🏎️", "name": "SuperTuxKart", "desc": "Classic FOSS 3D kart racer", "proprietary": false }
+      ]
+    }
+  ]
+}
