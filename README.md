@@ -22,7 +22,7 @@ A lightweight **Qt6 + QML** community concept for a modernized `manjaro-hello`, 
 - **30-Second Survival Guide:** Jargon-free onboarding covering Rolling Releases, avoiding random terminal scripts, and Timeshift snapshots.
 - **JSON-Driven FOSS App Picker:** Non-hardcoded categories (`data/apps.json`) in a slanted accordion layout with clear *Proprietary* badges and a copyable `pamac` command preview.
 - **Mascot Concept (Baby Masai Giraffe):** Manjaro is named after Mount Kilimanjaro in Tanzania—and the Masai giraffe (*Twiga*) is Tanzania's national animal. Included as a playful "Manjaro 2.0" community pitch.
-- - **Accessibility Toggle:** Switch cleanly between translucent Glass and Solid backgrounds from the top bar.
+- **Accessibility Toggle:** Switch cleanly between translucent Glass and Solid backgrounds from the top bar.
 - **Mascot Stage:** The right 1/3rd column is a modular layout placeholder designed to showcase **Jaro** or any future community-drawn mascot.
 
 ## Quick Run (Manjaro)
