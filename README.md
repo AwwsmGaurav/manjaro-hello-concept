@@ -17,6 +17,8 @@ A lightweight **Qt6 + QML** community concept for a modernized `manjaro-hello`, 
 | :---: | :---: |
 | ![Community](screenshots/card_4.png) | ![Contribute](screenshots/card_5.png) |
 
+![Solid Background toggled](screenshots/solid_bg.png)
+
 ## Highlights
 - **5-Card Horizontal Walkthrough:** Smooth swipe/arrow-key navigation with a frameless translucent UI.
 - **30-Second Survival Guide:** Jargon-free onboarding covering Rolling Releases, avoiding random terminal scripts, and Timeshift snapshots.
