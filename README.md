@@ -16,7 +16,4 @@ cd manjaro-hello-concept
 python main.py
 ```
 
-Or install locally via makepkg -si and run manjaro-hello-concept.
-
-License
-MIT
+Or install locally via `makepkg -si` and run `manjaro-hello-concept`.
