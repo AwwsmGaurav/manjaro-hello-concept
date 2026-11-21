@@ -11,7 +11,7 @@ A lightweight **Qt6 + QML** community concept for a modernized `manjaro-hello`, 
 ## Quick Run (Manjaro)
 ```bash
 sudo pacman -S --needed pyside6 noto-fonts
-git clone [https://github.com/AwwsmGaurav/manjaro-hello-concept.git](https://github.com/AwwsmGaurav/manjaro-hello-concept.git)
+git clone https://github.com/AwwsmGaurav/manjaro-hello-concept.git
 cd manjaro-hello-concept
 python main.py
 ```
