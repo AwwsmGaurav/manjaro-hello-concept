@@ -14,17 +14,19 @@ ApplicationWindow {
     flags: Qt.FramelessWindowHint | Qt.Window
     font.family: "Noto Sans"
 
-    // Manjaro palette
-    readonly property color accentGreen: "#35BF5C"
-    readonly property color glassBg: "#E8151A1F"
-    readonly property color cardBg: "#CC1D242B"
+    // Official Manjaro palette (#35BFA4)
+    readonly property color accentGreen: "#35BFA4"
+    readonly property color accentHover: "#42D6B8"
+    property bool solidMode: false
+    readonly property color glassBg: solidMode ? "#FF151A1F" : "#E8151A1F"
+    readonly property color cardBg: solidMode ? "#FF1D242B" : "#CC1D242B"
     readonly property color cardBorder: "#2AFFFFFF"
     readonly property color textPrimary: "#F0F4F8"
     readonly property color textMuted: "#9BA8B4"
 
     property var selectedApps: ({})
     property int selectedCount: 0
-    property int expandedCategory: -1   // Collapsed by default
+    property int expandedCategory: -1
     property string previewCmd: ""
     property bool copiedFeedback: false
 
@@ -63,7 +65,7 @@ ApplicationWindow {
         onActivated: Qt.quit()
     }
 
-    // Main translucent container
+    // Main translucent/solid container
     Rectangle {
         anchors.fill: parent
         color: glassBg
@@ -71,6 +73,8 @@ ApplicationWindow {
         border.color: "#28FFFFFF"
         border.width: 1
         clip: true
+
+        Behavior on color { ColorAnimation { duration: 180 } }
 
         // Subtle decorative curved accents in background
         Canvas {
@@ -108,7 +112,6 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 46
 
-                // Native Wayland/X11 window drag
                 MouseArea {
                     anchors.fill: parent
                     onPressed: root.startSystemMove()
@@ -118,7 +121,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     anchors.leftMargin: 22
                     anchors.rightMargin: 16
-                    spacing: 10
+                    spacing: 12
 
                     Rectangle { width: 9; height: 9; radius: 5; color: accentGreen }
                     Label {
@@ -129,6 +132,23 @@ ApplicationWindow {
                         font.bold: true
                     }
                     Item { Layout.fillWidth: true }
+
+                    // Subtle Transparency / Accessibility Toggle
+                    Button {
+                        text: solidMode ? "◐ Glass" : "● Solid"
+                        flat: true
+                        leftPadding: 8; rightPadding: 8; topPadding: 4; bottomPadding: 4
+                        contentItem: Text {
+                            text: parent.text
+                            color: parent.hovered ? textPrimary : textMuted
+                            font.pixelSize: 11
+                        }
+                        background: Rectangle {
+                            radius: 6
+                            color: parent.hovered ? "#1AFFFFFF" : "transparent"
+                        }
+                        onClicked: solidMode = !solidMode
+                    }
 
                     Button {
                         text: "Skip"
@@ -187,7 +207,6 @@ ApplicationWindow {
 
                             Item { Layout.fillHeight: true; Layout.preferredHeight: 2 }
 
-                            // Larger Manjaro Logo + Title
                             RowLayout {
                                 spacing: 22
                                 Item {
@@ -214,7 +233,6 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Generous gap before heartfelt message
                             Item { Layout.preferredHeight: 46 }
 
                             Label {
@@ -255,7 +273,6 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Free-space constellation of 3 circles
                             Item {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
@@ -266,7 +283,7 @@ ApplicationWindow {
                                     x: Math.max(8, parent.width * 0.04)
                                     y: Math.max(4, parent.height * 0.04)
                                     color: cardBg
-                                    border.color: "#5535BF5C"
+                                    border.color: "#5535BFA4"
                                     border.width: 1.5
 
                                     ColumnLayout {
@@ -298,7 +315,7 @@ ApplicationWindow {
                                     width: 194; height: 194; radius: 97
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     y: Math.max(120, parent.height - height - 8)
-                                    color: "#D91E2924"
+                                    color: solidMode ? "#FF1E2927" : "#D91E2927"
                                     border.color: accentGreen
                                     border.width: 1.5
 
@@ -332,7 +349,7 @@ ApplicationWindow {
                                     x: Math.min(parent.width - width - 8, parent.width * 0.96 - width)
                                     y: Math.max(12, parent.height * 0.08)
                                     color: cardBg
-                                    border.color: "#5535BF5C"
+                                    border.color: "#5535BFA4"
                                     border.width: 1.5
 
                                     ColumnLayout {
@@ -360,7 +377,6 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Understated Golden Advice
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 3
@@ -407,7 +423,6 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Single Long Rectangular Box divided by slanted lines
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
@@ -442,7 +457,6 @@ ApplicationWindow {
                                                     property bool isExpanded: expandedCategory === index
                                                     property var catApps: modelData.apps
 
-                                                    // Category Header Row (generous vertical padding)
                                                     Rectangle {
                                                         width: parent.width
                                                         height: 76
@@ -479,7 +493,6 @@ ApplicationWindow {
                                                             }
                                                             Item { Layout.fillWidth: true }
 
-                                                            // Expand label + rotating angle >
                                                             Row {
                                                                 spacing: 8
                                                                 Label {
@@ -500,7 +513,6 @@ ApplicationWindow {
                                                         }
                                                     }
 
-                                                    // Expandable App List
                                                     Column {
                                                         width: parent.width
                                                         visible: isExpanded
@@ -512,7 +524,7 @@ ApplicationWindow {
                                                                 property bool isChecked: !!selectedApps[modelData.id]
                                                                 width: parent.width
                                                                 height: 54
-                                                                color: isChecked ? "#1A35BF5C" : (appMa.containsMouse ? "#0DFFFFFF" : "transparent")
+                                                                color: isChecked ? "#1A35BFA4" : (appMa.containsMouse ? "#0DFFFFFF" : "transparent")
 
                                                                 MouseArea {
                                                                     id: appMa
@@ -593,7 +605,6 @@ ApplicationWindow {
                                                         }
                                                     }
 
-                                                    // Slanted Horizontal Divider between sections
                                                     Canvas {
                                                         visible: index < (backend ? backend.categories.length - 1 : 0)
                                                         width: parent.width
@@ -602,7 +613,7 @@ ApplicationWindow {
                                                         onPaint: {
                                                             var ctx = getContext("2d")
                                                             ctx.reset()
-                                                            ctx.strokeStyle = "#5535BF5C"
+                                                            ctx.strokeStyle = "#5535BFA4"
                                                             ctx.lineWidth = 1.5
                                                             ctx.beginPath()
                                                             ctx.moveTo(0, height - 2)
@@ -617,13 +628,12 @@ ApplicationWindow {
                                 }
                             }
 
-                            // Multi-Row Pamac Command Preview + Copy Button
                             Rectangle {
                                 Layout.fillWidth: true
                                 implicitHeight: cmdRow.implicitHeight + 16
                                 radius: 10
                                 color: "#1A000000"
-                                border.color: previewCmd !== "" ? "#4435BF5C" : "#1AFFFFFF"
+                                border.color: previewCmd !== "" ? "#4435BFA4" : "#1AFFFFFF"
 
                                 RowLayout {
                                     id: cmdRow
@@ -697,7 +707,6 @@ ApplicationWindow {
 
                             Item { Layout.fillHeight: true }
 
-                            // TOP: Open Forum Highlight (No Box) + Explicit URL
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 10
@@ -712,8 +721,8 @@ ApplicationWindow {
                                         font.letterSpacing: 1.5
                                     }
                                     Rectangle {
-                                        color: "#2235BF5C"
-                                        border.color: "#5535BF5C"
+                                        color: "#2235BFA4"
+                                        border.color: "#5535BFA4"
                                         radius: 6
                                         implicitWidth: urlLbl.implicitWidth + 14
                                         implicitHeight: 22
@@ -755,13 +764,12 @@ ApplicationWindow {
                                     }
                                     background: Rectangle {
                                         radius: 8
-                                        color: parent.hovered ? "#42D46B" : accentGreen
+                                        color: parent.hovered ? accentHover : accentGreen
                                     }
                                     onClicked: backend.openUrl("https://forum.manjaro.org")
                                 }
                             }
 
-                            // Hairline Divider
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.topMargin: 26
@@ -770,7 +778,6 @@ ApplicationWindow {
                                 color: "#22FFFFFF"
                             }
 
-                            // BOTTOM: Wiki & Official Socials
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 16
@@ -850,17 +857,16 @@ ApplicationWindow {
                                     }
                                 }
 
-                                // Featured Non-Profit / Donate Banner
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 112
                                     radius: 14
                                     gradient: Gradient {
                                         orientation: Gradient.Horizontal
-                                        GradientStop { position: 0.0; color: "#3335BF5C" }
+                                        GradientStop { position: 0.0; color: "#3335BFA4" }
                                         GradientStop { position: 1.0; color: "#141D242B" }
                                     }
-                                    border.color: "#5535BF5C"
+                                    border.color: "#5535BFA4"
 
                                     RowLayout {
                                         anchors.fill: parent
@@ -889,13 +895,12 @@ ApplicationWindow {
                                             text: "Donate"
                                             leftPadding: 18; rightPadding: 18; topPadding: 8; bottomPadding: 8
                                             contentItem: Text { text: parent.text; color: "#111"; font.pixelSize: 13; font.bold: true }
-                                            background: Rectangle { radius: 8; color: parent.hovered ? "#42D46B" : accentGreen }
+                                            background: Rectangle { radius: 8; color: parent.hovered ? accentHover : accentGreen }
                                             onClicked: backend.openUrl("https://manjaro.org/donate")
                                         }
                                     }
                                 }
 
-                                // Sleek Borderless Interactive List
                                 ColumnLayout {
                                     Layout.fillWidth: true
                                     spacing: 0
@@ -996,12 +1001,11 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 spacing: 10
 
-                                // Speech Bubble at top
                                 Rectangle {
                                     Layout.alignment: Qt.AlignHCenter
                                     Layout.topMargin: 6
-                                    color: "#2235BF5C"
-                                    border.color: "#4435BF5C"
+                                    color: "#2235BFA4"
+                                    border.color: "#4435BFA4"
                                     radius: 14
                                     implicitWidth: Math.min(parent.width - 12, quoteLbl.implicitWidth + 24)
                                     implicitHeight: quoteLbl.implicitHeight + 14
@@ -1016,7 +1020,6 @@ ApplicationWindow {
                                     }
                                 }
 
-                                // Transparent Mascot floating directly over the glass UI
                                 Image {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
@@ -1104,7 +1107,7 @@ ApplicationWindow {
                             text: swipeView.currentIndex === swipeView.count - 1 ? "Finish" : "Next"
                             leftPadding: 22; rightPadding: 22; topPadding: 8; bottomPadding: 8
                             contentItem: Text { text: parent.text; color: "#111"; font.pixelSize: 13; font.bold: true }
-                            background: Rectangle { radius: 8; color: parent.hovered ? "#42D46B" : accentGreen }
+                            background: Rectangle { radius: 8; color: parent.hovered ? accentHover : accentGreen }
                             onClicked: {
                                 if (swipeView.currentIndex < swipeView.count - 1) {
                                     swipeView.currentIndex++
