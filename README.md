@@ -2,6 +2,20 @@
 
 A lightweight **Qt6 + QML** community concept for a modernized `manjaro-hello`, designed to welcome newcomers without bloating the ISO.
 
+---
+
+## Preview
+
+![Welcome Card](screenshots/card_1.png)
+
+| 30-Second Survival Guide | Grab Your FOSS Apps |
+| :---: | :---: |
+| ![Survival Guide](screenshots/card_2.png) | ![FOSS Apps](screenshots/card_3.png) |
+
+| Community | Contribute & Support |
+| :---: | :---: |
+| ![Community](screenshots/card_4.png) | ![Contribute](screenshots/card_5.png) |
+
 ## Highlights
 - **5-Card Horizontal Walkthrough:** Smooth swipe/arrow-key navigation with a frameless translucent UI.
 - **30-Second Survival Guide:** Jargon-free onboarding covering Rolling Releases, avoiding random terminal scripts, and Timeshift snapshots.
