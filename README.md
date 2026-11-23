@@ -1,7 +1,8 @@
 # Manjaro Hello — UI/UX Concept
 
 A lightweight **Qt6 + QML** community concept for a modernized `manjaro-hello`, designed to welcome newcomers without bloating the ISO.
-**This is an AI assisted Project**
+
+**This is unofficial and AI assisted Project**
 
 ---
 
