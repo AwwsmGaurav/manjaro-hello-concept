@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Gaurav Kalambe (@AwwsmGaurav)
+// Project: Manjaro / CachyOS Hello UI/UX Concept Mockup
+
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
@@ -17,7 +21,7 @@ ApplicationWindow {
     // Official Manjaro palette (#35BFA4)
     readonly property color accentGreen: "#35BFA4"
     readonly property color accentHover: "#42D6B8"
-    property bool solidMode: false
+    property bool solidMode: typeof defaultSolidMode !== "undefined" ? defaultSolidMode : false
     readonly property color glassBg: solidMode ? "#FF151A1F" : "#E8151A1F"
     readonly property color cardBg: solidMode ? "#FF1D242B" : "#CC1D242B"
     readonly property color cardBorder: "#2AFFFFFF"

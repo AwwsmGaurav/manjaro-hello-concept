@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Gaurav Kalambe (@AwwsmGaurav)
+# Project: Manjaro / CachyOS Hello UI/UX Concept Mockup
+
 import json
 import sys
 from pathlib import Path
@@ -55,6 +59,10 @@ def main():
     engine.rootContext().setContextProperty("backend", backend)
 
     qml_file = BASE_DIR / "ui" / "Main.qml"
+    engine = QQmlApplicationEngine()
+    backend = Backend(engine)
+    engine.rootContext().setContextProperty("backend", backend)
+    engine.rootContext().setContextProperty("defaultSolidMode", "--solid" in sys.argv
     engine.load(QUrl.fromLocalFile(str(qml_file)))
 
     if not engine.rootObjects():
