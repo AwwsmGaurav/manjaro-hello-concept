@@ -39,14 +39,14 @@ Or install locally via `makepkg -si` and run `manjaro-hello-concept`.
 
 ### Maintainer / Packager Options
 
-    High-Contrast Solid Mode (`--solid`): Pass `--solid` to launch with an opaque background by default (recommended for lightweight window managers without compositing/blur, or for high-contrast accessibility):
+High-Contrast Solid Mode (`--solid`): Pass `--solid` to launch with an opaque background by default (recommended for lightweight window managers without compositing/blur, or for high-contrast accessibility):
     
     ```
     python main.py --solid
     ```
 
-    Rebranding: All app categories and packages live in data/apps.json. Accent colors, logos, and stage visuals are grouped at the top of ui/Main.qml.
-    Local Package: Run makepkg -si to build and install locally.
+Rebranding: All app categories and packages live in data/apps.json. Accent colors, logos, and stage visuals are grouped at the top of ui/Main.qml.
+Local Package: Run makepkg -si to build and install locally.
 
 ### License
 
