@@ -21,9 +21,16 @@ ApplicationWindow {
     // Official Manjaro palette (#35BFA4)
     readonly property color accentGreen: "#35BFA4"
     readonly property color accentHover: "#42D6B8"
-    property bool solidMode: typeof defaultSolidMode !== "undefined" ? defaultSolidMode : false
-    readonly property color glassBg: solidMode ? "#FF151A1F" : "#E8151A1F"
-    readonly property color cardBg: solidMode ? "#FF1D242B" : "#CC1D242B"
+    property bool solidMode: false
+    property real glassOpacity: 0.92
+    property real glassBlur: 0.65
+
+    readonly property color glassBg: root.solidMode
+        ? "#FF151A1F"
+        : Qt.rgba(0.082, 0.102, 0.122, root.glassOpacity)
+    readonly property color cardBg: root.solidMode
+        ? "#FF1D242B"
+        : Qt.rgba(0.114, 0.141, 0.169, Math.min(1.0, root.glassOpacity * 0.95))
     readonly property color cardBorder: "#2AFFFFFF"
     readonly property color textPrimary: "#F0F4F8"
     readonly property color textMuted: "#9BA8B4"
@@ -34,25 +41,38 @@ ApplicationWindow {
     property string previewCmd: ""
     property bool copiedFeedback: false
 
+    Component.onCompleted: {
+        try {
+            if (typeof defaultSolidMode !== "undefined")
+                root.solidMode = Boolean(defaultSolidMode)
+            if (typeof defaultGlassOpacity !== "undefined")
+                root.glassOpacity = Number(defaultGlassOpacity)
+            if (typeof defaultGlassBlur !== "undefined")
+                root.glassBlur = Number(defaultGlassBlur)
+        } catch (e) {
+            // Keep defaults when run standalone
+        }
+    }
+
     function toggleApp(appId) {
-        let copy = Object.assign({}, selectedApps)
+        let copy = Object.assign({}, root.selectedApps)
         if (copy[appId]) {
             delete copy[appId]
         } else {
             copy[appId] = true
         }
-        selectedApps = copy
-        selectedCount = Object.keys(copy).length
-        copiedFeedback = false
-        if (previewCmd !== "") {
-            previewCmd = backend.buildInstallCommand(Object.keys(copy))
+        root.selectedApps = copy
+        root.selectedCount = Object.keys(copy).length
+        root.copiedFeedback = false
+        if (root.previewCmd !== "") {
+            root.previewCmd = backend.buildInstallCommand(Object.keys(copy))
         }
     }
 
     Timer {
         id: copyResetTimer
         interval: 1800
-        onTriggered: copiedFeedback = false
+        onTriggered: root.copiedFeedback = false
     }
 
     // Keyboard navigation
@@ -72,13 +92,26 @@ ApplicationWindow {
     // Main translucent/solid container
     Rectangle {
         anchors.fill: parent
-        color: glassBg
+        color: root.glassBg
         radius: 16
         border.color: "#28FFFFFF"
         border.width: 1
         clip: true
 
         Behavior on color { ColorAnimation { duration: 180 } }
+
+        // Cross-DE Frosted Diffusion Layer (controlled by --blur 0.0..1.0)
+        Rectangle {
+            anchors.fill: parent
+            visible: !root.solidMode && root.glassBlur > 0
+            opacity: root.glassBlur * 0.35
+            gradient: Gradient {
+                orientation: Gradient.Vertical
+                GradientStop { position: 0.0; color: "#44FFFFFF" }
+                GradientStop { position: 0.35; color: "#14FFFFFF" }
+                GradientStop { position: 1.0; color: "#28000000" }
+            }
+        }
 
         // Subtle decorative curved accents in background
         Canvas {
@@ -87,7 +120,7 @@ ApplicationWindow {
             onPaint: {
                 var ctx = getContext("2d")
                 ctx.reset()
-                ctx.fillStyle = accentGreen
+                ctx.fillStyle = root.accentGreen
 
                 // Top-left organic curve
                 ctx.beginPath()
@@ -127,10 +160,15 @@ ApplicationWindow {
                     anchors.rightMargin: 16
                     spacing: 12
 
-                    Rectangle { width: 9; height: 9; radius: 5; color: accentGreen }
+                    Rectangle {
+                        Layout.preferredWidth: 9
+                        Layout.preferredHeight: 9
+                        radius: 5
+                        color: root.accentGreen
+                    }
                     Label {
                         text: "MANJARO HELLO  •  CONCEPT"
-                        color: textMuted
+                        color: root.textMuted
                         font.pixelSize: 11
                         font.letterSpacing: 1.4
                         font.bold: true
@@ -139,28 +177,30 @@ ApplicationWindow {
 
                     // Subtle Transparency / Accessibility Toggle
                     Button {
-                        text: solidMode ? "◐ Glass" : "● Solid"
+                        id: modeToggleBtn
+                        text: root.solidMode ? "◐ Glass" : "● Solid"
                         flat: true
                         leftPadding: 8; rightPadding: 8; topPadding: 4; bottomPadding: 4
                         contentItem: Text {
-                            text: parent.text
-                            color: parent.hovered ? textPrimary : textMuted
+                            text: modeToggleBtn.text
+                            color: modeToggleBtn.hovered ? root.textPrimary : root.textMuted
                             font.pixelSize: 11
                         }
                         background: Rectangle {
                             radius: 6
-                            color: parent.hovered ? "#1AFFFFFF" : "transparent"
+                            color: modeToggleBtn.hovered ? "#1AFFFFFF" : "transparent"
                         }
-                        onClicked: solidMode = !solidMode
+                        onClicked: root.solidMode = !root.solidMode
                     }
 
                     Button {
+                        id: skipBtn
                         text: "Skip"
                         visible: swipeView.currentIndex < swipeView.count - 1
                         flat: true
                         contentItem: Text {
-                            text: parent.text
-                            color: parent.hovered ? textPrimary : textMuted
+                            text: skipBtn.text
+                            color: skipBtn.hovered ? root.textPrimary : root.textMuted
                             font.pixelSize: 12
                         }
                         background: Item {}
@@ -169,18 +209,20 @@ ApplicationWindow {
 
                     // Frameless Close Button
                     Button {
-                        width: 28; height: 28
+                        id: closeBtn
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
                         flat: true
                         contentItem: Text {
                             text: "✕"
-                            color: parent.hovered ? "#FFFFFF" : textMuted
+                            color: closeBtn.hovered ? "#FFFFFF" : root.textMuted
                             font.pixelSize: 13
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
                         background: Rectangle {
                             radius: 14
-                            color: parent.hovered ? "#CCEF5350" : "#18FFFFFF"
+                            color: closeBtn.hovered ? "#CCEF5350" : "#18FFFFFF"
                         }
                         onClicked: Qt.quit()
                     }
@@ -214,23 +256,24 @@ ApplicationWindow {
                             RowLayout {
                                 spacing: 22
                                 Item {
-                                    width: 76; height: 76
-                                    Rectangle { x: 0;  y: 0;  width: 46; height: 22; radius: 4; color: accentGreen }
-                                    Rectangle { x: 0;  y: 0;  width: 22; height: 76; radius: 4; color: accentGreen }
-                                    Rectangle { x: 27; y: 27; width: 22; height: 49; radius: 4; color: accentGreen }
-                                    Rectangle { x: 54; y: 0;  width: 22; height: 76; radius: 4; color: accentGreen }
+                                    Layout.preferredWidth: 76
+                                    Layout.preferredHeight: 76
+                                    Rectangle { x: 0;  y: 0;  width: 46; height: 22; radius: 4; color: root.accentGreen }
+                                    Rectangle { x: 0;  y: 0;  width: 22; height: 76; radius: 4; color: root.accentGreen }
+                                    Rectangle { x: 27; y: 27; width: 22; height: 49; radius: 4; color: root.accentGreen }
+                                    Rectangle { x: 54; y: 0;  width: 22; height: 76; radius: 4; color: root.accentGreen }
                                 }
                                 ColumnLayout {
                                     spacing: 4
                                     Label {
                                         text: "Welcome to Manjaro"
-                                        color: textPrimary
+                                        color: root.textPrimary
                                         font.pixelSize: 36
                                         font.bold: true
                                     }
                                     Label {
                                         text: "Free, open, and built for everyone."
-                                        color: accentGreen
+                                        color: root.accentGreen
                                         font.pixelSize: 16
                                         font.weight: Font.Medium
                                     }
@@ -242,7 +285,7 @@ ApplicationWindow {
                             Label {
                                 Layout.fillWidth: true
                                 text: "Thank you for choosing Manjaro. Whether you're here to create, code, game, or just enjoy a fast and reliable desktop, you're in good hands.\n\nTake 30 seconds to swipe through these cards—we'll get you comfortable, safe, and equipped with your favorite FOSS tools."
-                                color: textMuted
+                                color: root.textMuted
                                 font.pixelSize: 15
                                 lineHeight: 1.55
                                 wrapMode: Text.WordWrap
@@ -266,13 +309,13 @@ ApplicationWindow {
                                 spacing: 3
                                 Label {
                                     text: "The 30-Second Survival Guide"
-                                    color: textPrimary
+                                    color: root.textPrimary
                                     font.pixelSize: 24
                                     font.bold: true
                                 }
                                 Label {
                                     text: "Three simple habits that keep Manjaro rock-solid for years."
-                                    color: textMuted
+                                    color: root.textMuted
                                     font.pixelSize: 13
                                 }
                             }
@@ -286,7 +329,7 @@ ApplicationWindow {
                                     width: 186; height: 186; radius: 93
                                     x: Math.max(8, parent.width * 0.04)
                                     y: Math.max(4, parent.height * 0.04)
-                                    color: cardBg
+                                    color: root.cardBg
                                     border.color: "#5535BFA4"
                                     border.width: 1.5
 
@@ -298,7 +341,7 @@ ApplicationWindow {
                                         Label {
                                             Layout.alignment: Qt.AlignHCenter
                                             text: "Rolling Release"
-                                            color: textPrimary
+                                            color: root.textPrimary
                                             font.pixelSize: 14
                                             font.bold: true
                                         }
@@ -306,7 +349,7 @@ ApplicationWindow {
                                             Layout.fillWidth: true
                                             horizontalAlignment: Text.AlignHCenter
                                             text: "No reinstalling. Just update regularly via Pamac."
-                                            color: textMuted
+                                            color: root.textMuted
                                             font.pixelSize: 12
                                             lineHeight: 1.3
                                             wrapMode: Text.WordWrap
@@ -319,8 +362,8 @@ ApplicationWindow {
                                     width: 194; height: 194; radius: 97
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     y: Math.max(120, parent.height - height - 8)
-                                    color: solidMode ? "#FF1E2927" : "#D91E2927"
-                                    border.color: accentGreen
+                                    color: root.solidMode ? "#FF1E2927" : "#D91E2927"
+                                    border.color: root.accentGreen
                                     border.width: 1.5
 
                                     ColumnLayout {
@@ -331,7 +374,7 @@ ApplicationWindow {
                                         Label {
                                             Layout.alignment: Qt.AlignHCenter
                                             text: "No Random Scripts"
-                                            color: textPrimary
+                                            color: root.textPrimary
                                             font.pixelSize: 14
                                             font.bold: true
                                         }
@@ -339,7 +382,7 @@ ApplicationWindow {
                                             Layout.fillWidth: true
                                             horizontalAlignment: Text.AlignHCenter
                                             text: "Use the built-in store first instead of random terminal commands."
-                                            color: textMuted
+                                            color: root.textMuted
                                             font.pixelSize: 12
                                             lineHeight: 1.3
                                             wrapMode: Text.WordWrap
@@ -352,7 +395,7 @@ ApplicationWindow {
                                     width: 186; height: 186; radius: 93
                                     x: Math.min(parent.width - width - 8, parent.width * 0.96 - width)
                                     y: Math.max(12, parent.height * 0.08)
-                                    color: cardBg
+                                    color: root.cardBg
                                     border.color: "#5535BFA4"
                                     border.width: 1.5
 
@@ -364,7 +407,7 @@ ApplicationWindow {
                                         Label {
                                             Layout.alignment: Qt.AlignHCenter
                                             text: "Your Safety Net"
-                                            color: textPrimary
+                                            color: root.textPrimary
                                             font.pixelSize: 14
                                             font.bold: true
                                         }
@@ -372,7 +415,7 @@ ApplicationWindow {
                                             Layout.fillWidth: true
                                             horizontalAlignment: Text.AlignHCenter
                                             text: "Set up Timeshift once to roll back any update in seconds."
-                                            color: textMuted
+                                            color: root.textMuted
                                             font.pixelSize: 12
                                             lineHeight: 1.3
                                             wrapMode: Text.WordWrap
@@ -386,7 +429,7 @@ ApplicationWindow {
                                 spacing: 3
                                 Label {
                                     text: "GOLDEN ADVICE"
-                                    color: accentGreen
+                                    color: root.accentGreen
                                     font.pixelSize: 10
                                     font.bold: true
                                     font.letterSpacing: 1.2
@@ -394,7 +437,7 @@ ApplicationWindow {
                                 Label {
                                     Layout.fillWidth: true
                                     text: "• Glance at Forum Announcements before big updates   • Keep a spare LTS kernel   • Reboot after kernel updates"
-                                    color: textMuted
+                                    color: root.textMuted
                                     font.pixelSize: 12
                                     wrapMode: Text.WordWrap
                                 }
@@ -416,13 +459,13 @@ ApplicationWindow {
                                 spacing: 2
                                 Label {
                                     text: "Grab Your FOSS Apps"
-                                    color: textPrimary
+                                    color: root.textPrimary
                                     font.pixelSize: 24
                                     font.bold: true
                                 }
                                 Label {
                                     text: "Optional convenience picks—zero affiliation, zero bloat on the ISO."
-                                    color: textMuted
+                                    color: root.textMuted
                                     font.pixelSize: 12
                                 }
                             }
@@ -430,9 +473,9 @@ ApplicationWindow {
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
-                                color: cardBg
+                                color: root.cardBg
                                 radius: 14
-                                border.color: cardBorder
+                                border.color: root.cardBorder
                                 clip: true
 
                                 Flickable {
@@ -457,8 +500,10 @@ ApplicationWindow {
                                                 model: backend ? backend.categories : []
 
                                                 Column {
+                                                    required property var modelData
+                                                    required property int index
                                                     width: accordionCol.width
-                                                    property bool isExpanded: expandedCategory === index
+                                                    property bool isExpanded: root.expandedCategory === index
                                                     property var catApps: modelData.apps
 
                                                     Rectangle {
@@ -471,7 +516,7 @@ ApplicationWindow {
                                                             anchors.fill: parent
                                                             hoverEnabled: true
                                                             cursorShape: Qt.PointingHandCursor
-                                                            onClicked: expandedCategory = (expandedCategory === index ? -1 : index)
+                                                            onClicked: root.expandedCategory = (root.expandedCategory === index ? -1 : index)
                                                         }
 
                                                         RowLayout {
@@ -485,13 +530,13 @@ ApplicationWindow {
                                                                 spacing: 1
                                                                 Label {
                                                                     text: modelData.name
-                                                                    color: isExpanded ? accentGreen : textPrimary
+                                                                    color: isExpanded ? root.accentGreen : root.textPrimary
                                                                     font.pixelSize: 17
                                                                     font.bold: true
                                                                 }
                                                                 Label {
                                                                     text: catApps.length + " curated picks"
-                                                                    color: textMuted
+                                                                    color: root.textMuted
                                                                     font.pixelSize: 12
                                                                 }
                                                             }
@@ -501,13 +546,13 @@ ApplicationWindow {
                                                                 spacing: 8
                                                                 Label {
                                                                     text: isExpanded ? "Hide" : "Explore"
-                                                                    color: textMuted
+                                                                    color: root.textMuted
                                                                     font.pixelSize: 12
                                                                     anchors.verticalCenter: parent.verticalCenter
                                                                 }
                                                                 Label {
                                                                     text: "❯"
-                                                                    color: isExpanded ? accentGreen : textMuted
+                                                                    color: isExpanded ? root.accentGreen : root.textMuted
                                                                     font.pixelSize: 15
                                                                     font.bold: true
                                                                     rotation: isExpanded ? 90 : 0
@@ -525,7 +570,8 @@ ApplicationWindow {
                                                         Repeater {
                                                             model: catApps
                                                             Rectangle {
-                                                                property bool isChecked: !!selectedApps[modelData.id]
+                                                                required property var modelData
+                                                                property bool isChecked: !!root.selectedApps[modelData.id]
                                                                 width: parent.width
                                                                 height: 54
                                                                 color: isChecked ? "#1A35BFA4" : (appMa.containsMouse ? "#0DFFFFFF" : "transparent")
@@ -545,7 +591,9 @@ ApplicationWindow {
                                                                     spacing: 14
 
                                                                     Rectangle {
-                                                                        width: 36; height: 36; radius: 8
+                                                                        Layout.preferredWidth: 36
+                                                                        Layout.preferredHeight: 36
+                                                                        radius: 8
                                                                         color: "#22FFFFFF"
                                                                         Label {
                                                                             anchors.centerIn: parent
@@ -561,7 +609,7 @@ ApplicationWindow {
                                                                             spacing: 8
                                                                             Label {
                                                                                 text: modelData.name
-                                                                                color: textPrimary
+                                                                                color: root.textPrimary
                                                                                 font.pixelSize: 14
                                                                                 font.bold: true
                                                                             }
@@ -583,7 +631,7 @@ ApplicationWindow {
                                                                         }
                                                                         Label {
                                                                             text: modelData.desc
-                                                                            color: textMuted
+                                                                            color: root.textMuted
                                                                             font.pixelSize: 11
                                                                             elide: Text.ElideRight
                                                                             Layout.fillWidth: true
@@ -591,9 +639,11 @@ ApplicationWindow {
                                                                     }
 
                                                                     Rectangle {
-                                                                        width: 20; height: 20; radius: 5
-                                                                        color: isChecked ? accentGreen : "transparent"
-                                                                        border.color: isChecked ? accentGreen : "#66FFFFFF"
+                                                                        Layout.preferredWidth: 20
+                                                                        Layout.preferredHeight: 20
+                                                                        radius: 5
+                                                                        color: isChecked ? root.accentGreen : "transparent"
+                                                                        border.color: isChecked ? root.accentGreen : "#66FFFFFF"
                                                                         border.width: 1.5
                                                                         Label {
                                                                             anchors.centerIn: parent
@@ -637,7 +687,7 @@ ApplicationWindow {
                                 implicitHeight: cmdRow.implicitHeight + 16
                                 radius: 10
                                 color: "#1A000000"
-                                border.color: previewCmd !== "" ? "#4435BFA4" : "#1AFFFFFF"
+                                border.color: root.previewCmd !== "" ? "#4435BFA4" : "#1AFFFFFF"
 
                                 RowLayout {
                                     id: cmdRow
@@ -648,52 +698,54 @@ ApplicationWindow {
 
                                     Label {
                                         Layout.fillWidth: true
-                                        text: previewCmd !== "" ? previewCmd : (selectedCount + " app(s) selected — click Preview to build your Pamac command")
-                                        color: previewCmd !== "" ? accentGreen : textMuted
+                                        text: root.previewCmd !== "" ? root.previewCmd : (root.selectedCount + " app(s) selected — click Preview to build your Pamac command")
+                                        color: root.previewCmd !== "" ? root.accentGreen : root.textMuted
                                         font.pixelSize: 12
-                                        font.family: previewCmd !== "" ? "monospace" : "Noto Sans"
+                                        font.family: root.previewCmd !== "" ? "monospace" : "Noto Sans"
                                         wrapMode: Text.Wrap
                                         maximumLineCount: 3
                                         elide: Text.ElideRight
                                     }
 
                                     Button {
-                                        visible: previewCmd !== ""
-                                        text: copiedFeedback ? "Copied ✓" : "Copy"
+                                        id: copyBtn
+                                        visible: root.previewCmd !== ""
+                                        text: root.copiedFeedback ? "Copied ✓" : "Copy"
                                         leftPadding: 12; rightPadding: 12; topPadding: 6; bottomPadding: 6
                                         contentItem: Text {
-                                            text: parent.text
-                                            color: copiedFeedback ? accentGreen : textPrimary
+                                            text: copyBtn.text
+                                            color: root.copiedFeedback ? root.accentGreen : root.textPrimary
                                             font.pixelSize: 12
                                             font.bold: true
                                         }
                                         background: Rectangle {
                                             radius: 7
                                             color: "#22FFFFFF"
-                                            border.color: copiedFeedback ? accentGreen : "#33FFFFFF"
+                                            border.color: root.copiedFeedback ? root.accentGreen : "#33FFFFFF"
                                         }
                                         onClicked: {
-                                            backend.copyToClipboard(previewCmd)
-                                            copiedFeedback = true
+                                            backend.copyToClipboard(root.previewCmd)
+                                            root.copiedFeedback = true
                                             copyResetTimer.restart()
                                         }
                                     }
 
                                     Button {
+                                        id: previewBtn
                                         text: "Preview Command"
-                                        enabled: selectedCount > 0
+                                        enabled: root.selectedCount > 0
                                         opacity: enabled ? 1.0 : 0.4
                                         leftPadding: 12; rightPadding: 12; topPadding: 6; bottomPadding: 6
                                         contentItem: Text {
-                                            text: parent.text
+                                            text: previewBtn.text
                                             color: "#111"
                                             font.pixelSize: 12
                                             font.bold: true
                                         }
-                                        background: Rectangle { radius: 7; color: accentGreen }
+                                        background: Rectangle { radius: 7; color: root.accentGreen }
                                         onClicked: {
-                                            previewCmd = backend.buildInstallCommand(Object.keys(selectedApps))
-                                            copiedFeedback = false
+                                            root.previewCmd = backend.buildInstallCommand(Object.keys(root.selectedApps))
+                                            root.copiedFeedback = false
                                         }
                                     }
                                 }
@@ -719,7 +771,7 @@ ApplicationWindow {
                                     spacing: 10
                                     Label {
                                         text: "THE HEART OF MANJARO"
-                                        color: accentGreen
+                                        color: root.accentGreen
                                         font.pixelSize: 11
                                         font.bold: true
                                         font.letterSpacing: 1.5
@@ -734,7 +786,7 @@ ApplicationWindow {
                                             id: urlLbl
                                             anchors.centerIn: parent
                                             text: "forum.manjaro.org"
-                                            color: accentGreen
+                                            color: root.accentGreen
                                             font.pixelSize: 11
                                             font.family: "monospace"
                                             font.bold: true
@@ -744,31 +796,32 @@ ApplicationWindow {
 
                                 Label {
                                     text: "Join the Manjaro Forum"
-                                    color: textPrimary
+                                    color: root.textPrimary
                                     font.pixelSize: 32
                                     font.bold: true
                                 }
                                 Label {
                                     Layout.fillWidth: true
                                     text: "Stuck on a setup step, checking update announcements, or want to share feedback? Our community forum is where users and developers hang out every single day."
-                                    color: textMuted
+                                    color: root.textMuted
                                     font.pixelSize: 14
                                     lineHeight: 1.48
                                     wrapMode: Text.WordWrap
                                 }
                                 Button {
+                                    id: forumBtn
                                     Layout.topMargin: 6
                                     text: "Visit forum.manjaro.org  →"
                                     leftPadding: 20; rightPadding: 20; topPadding: 10; bottomPadding: 10
                                     contentItem: Text {
-                                        text: parent.text
+                                        text: forumBtn.text
                                         color: "#111"
                                         font.pixelSize: 13
                                         font.bold: true
                                     }
                                     background: Rectangle {
                                         radius: 8
-                                        color: parent.hovered ? accentHover : accentGreen
+                                        color: forumBtn.hovered ? root.accentHover : root.accentGreen
                                     }
                                     onClicked: backend.openUrl("https://forum.manjaro.org")
                                 }
@@ -778,7 +831,7 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 Layout.topMargin: 26
                                 Layout.bottomMargin: 22
-                                height: 1
+                                Layout.preferredHeight: 1
                                 color: "#22FFFFFF"
                             }
 
@@ -793,11 +846,12 @@ ApplicationWindow {
                                     ]
 
                                     Rectangle {
+                                        required property var modelData
                                         Layout.fillWidth: true
                                         Layout.preferredHeight: 112
-                                        color: cardBg
+                                        color: root.cardBg
                                         radius: 12
-                                        border.color: commMa.containsMouse ? accentGreen : cardBorder
+                                        border.color: commMa.containsMouse ? root.accentGreen : root.cardBorder
 
                                         MouseArea {
                                             id: commMa
@@ -814,12 +868,12 @@ ApplicationWindow {
                                             RowLayout {
                                                 spacing: 8
                                                 Label { text: modelData.icon; font.pixelSize: 18 }
-                                                Label { text: modelData.title; color: textPrimary; font.pixelSize: 15; font.bold: true }
+                                                Label { text: modelData.title; color: root.textPrimary; font.pixelSize: 15; font.bold: true }
                                             }
                                             Label {
                                                 Layout.fillWidth: true
                                                 text: modelData.desc
-                                                color: textMuted
+                                                color: root.textMuted
                                                 font.pixelSize: 12
                                                 wrapMode: Text.WordWrap
                                             }
@@ -850,13 +904,13 @@ ApplicationWindow {
                                     spacing: 3
                                     Label {
                                         text: "Shape Manjaro's Future"
-                                        color: textPrimary
+                                        color: root.textPrimary
                                         font.pixelSize: 26
                                         font.bold: true
                                     }
                                     Label {
                                         text: "Powered by our community and non-profit foundation."
-                                        color: textMuted
+                                        color: root.textMuted
                                         font.pixelSize: 13
                                     }
                                 }
@@ -882,24 +936,25 @@ ApplicationWindow {
                                             spacing: 4
                                             Label {
                                                 text: "💚 Support the Non-Profit"
-                                                color: textPrimary
+                                                color: root.textPrimary
                                                 font.pixelSize: 17
                                                 font.bold: true
                                             }
                                             Label {
                                                 Layout.fillWidth: true
                                                 text: "Donations fund servers, independent development, and open-source advocacy."
-                                                color: textMuted
+                                                color: root.textMuted
                                                 font.pixelSize: 12
                                                 wrapMode: Text.WordWrap
                                             }
                                         }
 
                                         Button {
+                                            id: donateBtn
                                             text: "Donate"
                                             leftPadding: 18; rightPadding: 18; topPadding: 8; bottomPadding: 8
-                                            contentItem: Text { text: parent.text; color: "#111"; font.pixelSize: 13; font.bold: true }
-                                            background: Rectangle { radius: 8; color: parent.hovered ? accentHover : accentGreen }
+                                            contentItem: Text { text: donateBtn.text; color: "#111"; font.pixelSize: 13; font.bold: true }
+                                            background: Rectangle { radius: 8; color: donateBtn.hovered ? root.accentHover : root.accentGreen }
                                             onClicked: backend.openUrl("https://manjaro.org/donate")
                                         }
                                     }
@@ -917,6 +972,8 @@ ApplicationWindow {
                                         ]
 
                                         Column {
+                                            required property var modelData
+                                            required property int index
                                             Layout.fillWidth: true
                                             Rectangle {
                                                 width: parent.width
@@ -942,12 +999,12 @@ ApplicationWindow {
                                                     ColumnLayout {
                                                         Layout.fillWidth: true
                                                         spacing: 1
-                                                        Label { text: modelData.title; color: textPrimary; font.pixelSize: 15; font.bold: true }
-                                                        Label { text: modelData.desc; color: textMuted; font.pixelSize: 12 }
+                                                        Label { text: modelData.title; color: root.textPrimary; font.pixelSize: 15; font.bold: true }
+                                                        Label { text: modelData.desc; color: root.textMuted; font.pixelSize: 12 }
                                                     }
                                                     Label {
                                                         text: "→"
-                                                        color: contribMa.containsMouse ? accentGreen : textMuted
+                                                        color: contribMa.containsMouse ? root.accentGreen : root.textMuted
                                                         font.pixelSize: 18
                                                         font.bold: true
                                                     }
@@ -995,6 +1052,8 @@ ApplicationWindow {
                         ]
 
                         Item {
+                            required property var modelData
+                            required property int index
                             anchors.fill: parent
                             anchors.margins: 16
                             opacity: swipeView.currentIndex === index ? 1.0 : 0.0
@@ -1018,7 +1077,7 @@ ApplicationWindow {
                                         id: quoteLbl
                                         anchors.centerIn: parent
                                         text: modelData.quote
-                                        color: textPrimary
+                                        color: root.textPrimary
                                         font.pixelSize: 13
                                         font.italic: true
                                     }
@@ -1055,7 +1114,7 @@ ApplicationWindow {
                         text: "Launch at start"
                         contentItem: Text {
                             text: autostartCheck.text
-                            color: textMuted
+                            color: root.textMuted
                             font.pixelSize: 13
                             leftPadding: autostartCheck.indicator.width + 8
                             verticalAlignment: Text.AlignVCenter
@@ -1065,8 +1124,8 @@ ApplicationWindow {
                             x: autostartCheck.leftPadding
                             y: parent.height / 2 - height / 2
                             radius: 4
-                            color: autostartCheck.checked ? accentGreen : "transparent"
-                            border.color: autostartCheck.checked ? accentGreen : textMuted
+                            color: autostartCheck.checked ? root.accentGreen : "transparent"
+                            border.color: autostartCheck.checked ? root.accentGreen : root.textMuted
                             Text {
                                 anchors.centerIn: parent
                                 text: "✓"
@@ -1087,10 +1146,11 @@ ApplicationWindow {
                         onCurrentIndexChanged: swipeView.currentIndex = currentIndex
 
                         delegate: Rectangle {
+                            required property int index
                             implicitWidth: index === swipeView.currentIndex ? 22 : 8
                             implicitHeight: 8
                             radius: 4
-                            color: index === swipeView.currentIndex ? accentGreen : "#44FFFFFF"
+                            color: index === swipeView.currentIndex ? root.accentGreen : "#44FFFFFF"
                             Behavior on implicitWidth { NumberAnimation { duration: 180 } }
                         }
                     }
@@ -1100,18 +1160,20 @@ ApplicationWindow {
                     Row {
                         spacing: 10
                         Button {
+                            id: backBtn
                             text: "Back"
                             visible: swipeView.currentIndex > 0
                             leftPadding: 18; rightPadding: 18; topPadding: 8; bottomPadding: 8
-                            contentItem: Text { text: parent.text; color: textPrimary; font.pixelSize: 13 }
-                            background: Rectangle { radius: 8; color: parent.hovered ? "#33FFFFFF" : "#1AFFFFFF" }
+                            contentItem: Text { text: backBtn.text; color: root.textPrimary; font.pixelSize: 13 }
+                            background: Rectangle { radius: 8; color: backBtn.hovered ? "#33FFFFFF" : "#1AFFFFFF" }
                             onClicked: swipeView.currentIndex--
                         }
                         Button {
+                            id: nextBtn
                             text: swipeView.currentIndex === swipeView.count - 1 ? "Finish" : "Next"
                             leftPadding: 22; rightPadding: 22; topPadding: 8; bottomPadding: 8
-                            contentItem: Text { text: parent.text; color: "#111"; font.pixelSize: 13; font.bold: true }
-                            background: Rectangle { radius: 8; color: parent.hovered ? accentHover : accentGreen }
+                            contentItem: Text { text: nextBtn.text; color: "#111"; font.pixelSize: 13; font.bold: true }
+                            background: Rectangle { radius: 8; color: nextBtn.hovered ? root.accentHover : root.accentGreen }
                             onClicked: {
                                 if (swipeView.currentIndex < swipeView.count - 1) {
                                     swipeView.currentIndex++
